@@ -84,7 +84,7 @@ module mqnic_interface_tx #
     /*
      * Transmit request status output
      */
-    output wire [DMA_CLIENT_LEN_WIDTH-1:0]              m_axis_tx_req_status_len,
+    output wire [DMA_LEN_WIDTH-1:0]              m_axis_tx_req_status_len,
     output wire [REQ_TAG_WIDTH-1:0]                     m_axis_tx_req_status_tag,
     output wire                                         m_axis_tx_req_status_valid,
 
@@ -185,7 +185,7 @@ module mqnic_interface_tx #
     /*
      * Configuration
      */
-    input  wire [DMA_CLIENT_LEN_WIDTH-1:0]              mtu
+    input  wire [DMA_LEN_WIDTH-1:0]              mtu
 );
 
 parameter DMA_CLIENT_TAG_WIDTH = $clog2(TX_DESC_TABLE_SIZE);

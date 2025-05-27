@@ -212,7 +212,7 @@ module mqnic_interface_rx #
     /*
      * Configuration
      */
-    input  wire [DMA_CLIENT_LEN_WIDTH-1:0]              mtu
+    input  wire [DMA_LEN_WIDTH-1:0]              mtu
 );
 
 parameter DMA_CLIENT_TAG_WIDTH = $clog2(RX_DESC_TABLE_SIZE);
