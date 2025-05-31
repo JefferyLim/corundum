@@ -232,6 +232,161 @@ int main(int argc, char *argv[])
             goto err;
         }
 
+        // For Alveo U280, setting QSFP LPMODE
+    	{
+	        uint32_t reg = 0x028000;
+	        uint32_t val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+	        printf("REG MAP: 0x%x\n", val);
+		    reg = 0x28018;
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+    	        usleep(100000);
+            } while (val & (1 << 5));
+		    
+            reg = 0x29000;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x0D000000);
+
+		    reg = 0x29004;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000000);
+
+            reg = 0x28018;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            val |= (1 << 5);
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, val);
+
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            	usleep(100000);
+            } while (val & (1 << 5));
+
+            reg = 0x28304;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            if (val != 0) {
+                printf("Error detected in HOST_MSG_ERR_REG: 0x%08X\n", val);
+                return -1;
+            }
+
+
+            reg = 0x29008;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            printf("Received response data: 0x%08X\n", val);
+
+            // Step 1: Peek 0x28018 until bit 5 is 0 (Mailbox available)
+            reg = 0x28018;
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+                usleep(10000); // Sleep 10 ms
+            } while (val & (1 << 5));
+
+            // Step 2: Poke 0x29000 with 0x0E000000 (Write Request Message Header)
+            reg = 0x29000;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x0E000000);
+
+            // Step 3: Poke 0x29004 with 0x00000000 (Select Cage 0)
+            reg = 0x29004;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000000);
+
+            // Step 4: Poke 0x29008 with 0x00000000 (QSFP low-speed write data: reset)
+            reg = 0x29008;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000000);
+
+            // Step 5: Poke 0x28018 with 0x20 (Set CONTROL_REG[5] to 1)
+            reg = 0x28018;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            val |= (1 << 5);
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, val);
+
+            // Step 6: Peek 0x28018 until bit 5 is 0 (CMS completed write)
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+                usleep(10000); // Sleep 10 ms
+            } while (val & (1 << 5));
+
+            // Step 7: Peek 0x28304 to confirm no errors
+            reg = 0x28304;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            if (val != 0) {
+                printf("Error detected in HOST_MSG_ERR_REG: 0x%08X\n", val);
+                return -1;
+            }
+    
+            // Step 1: Peek 0x28018 until bit 5 is 0 (Mailbox available)
+            reg = 0x28018;
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+                usleep(10000); // Sleep 10 ms
+            } while (val & (1 << 5));
+
+            // Step 2: Poke 0x29000 with 0x0E000000 (Write Request Message Header)
+            reg = 0x29000;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x0E000000);
+
+            // Step 3: Poke 0x29004 with 0x00000000 (Select Cage 0)
+            reg = 0x29004;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000001);
+
+            // Step 4: Poke 0x29008 with 0x00000000 (QSFP low-speed write data: reset)
+            reg = 0x29008;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000000);
+
+            // Step 5: Poke 0x28018 with 0x20 (Set CONTROL_REG[5] to 1)
+            reg = 0x28018;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            val |= (1 << 5);
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, val);
+
+            // Step 6: Peek 0x28018 until bit 5 is 0 (CMS completed write)
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+                usleep(10000); // Sleep 10 ms
+            } while (val & (1 << 5));
+
+            // Step 7: Peek 0x28304 to confirm no errors
+            reg = 0x28304;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            if (val != 0) {
+                printf("Error detected in HOST_MSG_ERR_REG: 0x%08X\n", val);
+                return -1;
+            }
+
+
+            printf("QSFP module reset request completed successfully.\n");
+
+            reg = 0x28018;
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+    	        usleep(100000);
+            } while (val & (1 << 5));
+		    
+            reg = 0x29000;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x0D000000);
+
+		    reg = 0x29004;
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, 0x00000000);
+
+            reg = 0x28018;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            val |= (1 << 5);
+            mqnic_alveo_bmc_reg_write(bmc_rb, reg, val);
+
+            do {
+                val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            	usleep(100000);
+            } while (val & (1 << 5));
+
+            reg = 0x28304;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            if (val != 0) {
+                printf("Error detected in HOST_MSG_ERR_REG: 0x%08X\n", val);
+                return -1;
+            }
+
+
+            reg = 0x29008;
+            val = mqnic_alveo_bmc_reg_read(bmc_rb, reg);
+            printf("Received response data: 0x%08X\n", val);
+        }
+
         // read sensor channels
         printf("Sensor values:\n");
         for (const struct sensor_channel *ptr = alveo_bmc_sensors; ptr->reg; ptr++)
